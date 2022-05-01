@@ -3,13 +3,16 @@ import { Navigate, useParams } from 'react-router-dom';
 
 import ThoughtList from '../components/ThoughtList';
 import FriendList from '../components/FriendsList';
+import ThoughtForm from '../components/ThoughtForm';
 import { QUERY_USER, QUERY_ME } from '../utils/queries';
 
-import { useQuery } from '@apollo/client';
+import { ADD_FRIEND } from '../utils/mutations';
+import { useQuery, useMutation } from '@apollo/client';
 import Auth from '../utils/auth';
 
 const Profile = () => {
   const { username: userParam } = useParams();
+  const [addFriend] = useMutation(ADD_FRIEND);
 
   const { loading, data } = useQuery(userParam ? QUERY_USER : QUERY_ME, {
     variables: { username: userParam },
@@ -29,10 +32,21 @@ const Profile = () => {
   if (!user?.username) {
     return (
       <h4>
-        You need to be logged in to see this page. Use the navigation links above to sign up or log in!
+        You need to be logged in to see this page. Use the navigation links
+        above to sign up or log in!
       </h4>
     );
   }
+
+  const handleClick = async () => {
+    try {
+      await addFriend({
+        variables: { id: user._id },
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div>
@@ -45,6 +59,12 @@ const Profile = () => {
             thoughts={user.thoughts}
             title={`${user.username}'s thoughts...`}
           />
+
+          {userParam && (
+            <button className="btn ml-auto" onClick={handleClick}>
+              Add Friend
+            </button>
+          )}
         </div>
 
         <div className="col-12 col-lg-3 mb-3">
@@ -55,6 +75,7 @@ const Profile = () => {
           />
         </div>
       </div>
+      <div className="mb-3">{!userParam && <ThoughtForm />}</div>
     </div>
   );
 };
